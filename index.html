@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smurf cat</title>
+    <title>smurf</title>
     <style>
         body {
             margin: 0;
@@ -11,6 +11,11 @@
             position: relative;
         }
         #smur {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+        }
+        .enemy {
             position: absolute;
             width: 120px;
             height: 120px;
@@ -38,14 +43,23 @@
         const smur = document.getElementById('smur');
         const fire = document.getElementById('fire');
         const black = document.getElementById('black');
+        const enemiesContainer = document.createElement('div');
+        enemiesContainer.id = 'enemies-container';
+        document.body.appendChild(enemiesContainer);
+
         let x = 0;
         let y = 0;
         let fireX = x + smur.width;
-        let keys = {}; // Store pressed keys
+        let enemies = [];
+        let keys = {};
+        let screenWidth = window.innerWidth;
+        let fireCooldown = false;
+        const cooldownDuration = 1000;
 
         const step = 10;
-        const fireStep = 10; // Adjust the speed of the fireball
-        const screenWidth = window.innerWidth;
+        const fireStep = 10;
+        const enemySpeed = 2;
+        const spawnInterval = 10000;
 
         // Initialize gamepad support
         window.addEventListener("gamepadconnected", (event) => {
@@ -85,9 +99,12 @@
 
             // Check if the fireball has gone offscreen, reset it
             if (fireX > screenWidth) {
-                fireX = -10; // Place it just off the left side of the screen
+                fireX = -10;
                 fire.style.transform = `translate(${fireX}px, ${y}px)`;
             }
+
+            // Move the enemies towards smur
+            moveEnemies();
         }
 
         // Handle keyboard input for WASD control
@@ -99,6 +116,21 @@
 
             // Update the character's position based on the pressed keys
             updateCharacterPosition();
+
+            // Handle the 'F' key to shoot fire
+            if (!fireCooldown) {
+                if (key === 'f') {
+                    fireCooldown = true;
+                    fireX = x + smur.width;
+                    fire.style.transform = `translate(${fireX}px, ${y}px)`;
+                    fire.style.display = 'block'; // Display the fireball when firing
+
+                    setTimeout(() => {
+                        fire.style.display = 'none'; // Hide the fireball after the cooldown
+                        fireCooldown = false;
+                    }, cooldownDuration);
+                }
+            }
         });
 
         document.addEventListener('keyup', (event) => {
@@ -133,6 +165,36 @@
             x += xChange;
             y += yChange;
             smur.style.transform = `translate(${x}px, ${y}px)`;
+
+            // Move the enemies towards smur
+            moveEnemies();
+        }
+
+        function moveEnemies() {
+            for (let i = 0; i < enemies.length; i++) {
+                const enemy = enemies[i];
+                const enemyX = parseFloat(enemy.style.transform.match(/translate\(([^p]*)px/)[1]);
+                const enemyY = parseFloat(enemy.style.transform.match(/,([^p]*)px\)/)[1]);
+                const angle = Math.atan2(y - enemyY, x - enemyX);
+                const deltaX = Math.cos(angle) * enemySpeed;
+                const deltaY = Math.sin(angle) * enemySpeed;
+                const newEnemyX = enemyX + deltaX;
+                const newEnemyY = enemyY + deltaY;
+                enemy.style.transform = `translate(${newEnemyX}px, ${newEnemyY}px)`;
+            }
+        }
+
+        // Spawn enemies randomly every 10 seconds
+        setInterval(() => {
+            spawnEnemy();
+        }, spawnInterval);
+
+        function spawnEnemy() {
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            enemy.style.transform = `translate(${screenWidth}px, ${Math.random() * (window.innerHeight - 120)}px)`;
+            enemiesContainer.appendChild(enemy);
+            enemies.push(enemy);
         }
     </script>
 </body>
