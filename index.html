@@ -3,20 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smurf Cat: The Game</title>
+    <title>smurf cat</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
+            position: relative;
         }
         #smur {
             position: absolute;
             width: 120px;
-            height: 120px; /* Set the desired size */
+            height: 120px;
         }
         #fire {
             position: absolute;
             display: none;
+            width: 10px;
+            height: 10px;
         }
         #black {
             position: absolute;
@@ -28,8 +31,8 @@
     </style>
 </head>
 <body>
-    <img id="smur" src="smur.png" alt="Smur Image">
-    <img id="fire" src="maxresdefault.jpg" alt="Fire Image">
+    <img id="smur" src="maxresdefault.jpg" alt="Smur Image">
+    <img id="fire" src="Mario_Fireball.png" alt="Fire Image">
     <div id="black"></div>
     <script>
         const smur = document.getElementById('smur');
@@ -38,9 +41,11 @@
         let x = 0;
         let y = 0;
         let fireCooldown = false;
+        let fireX = x + smur.width;
 
         const step = 10;
-        const cooldownDuration = 1000; // 1 second
+        const fireStep = 20;
+        const cooldownDuration = 1000;
 
         // Initialize gamepad support
         window.addEventListener("gamepadconnected", (event) => {
@@ -58,26 +63,71 @@
             x += xAxis * step;
             y += yAxis * step;
 
-            // Check if the new position is inside the black image bounds.
-            if (
-                x >= 0 &&
-                x <= 1080 &&
-                y === 470 &&
-                !(x <= 1080 && x + smur.width >= 0)
-            ) {
-                // If the character is at the specified y-coordinate range,
-                // show the black image spanning across the screen.
-                black.style.transform = `translate(0px, 470px)`;
-                black.style.display = 'block';
-            } else {
-                black.style.display = 'none';
-                // Update the character's position only if it's not inside the black image bounds.
-                smur.style.transform = `translate(${x}px, ${y}px)`;
-            }
+            // Update the character's position
+            smur.style.transform = `translate(${x}px, ${y}px)`;
+
+            // Center the character on the screen
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            const translateX = viewportWidth / 2 - x - smur.width / 2;
+            const translateY = viewportHeight / 2 - y - smur.height / 2;
+
+            // Translate the body element to follow the character
+            document.body.style.transform = `translate(${translateX}px, ${translateY}px)`;
 
             // Request the next animation frame to keep the gamepad input loop running
             requestAnimationFrame(() => handleGamepadInput(gamepad));
+
+            // Move the fire
+            if (fireCooldown) {
+                fireX += fireStep;
+                fire.style.transform = `translate(${fireX}px, ${y}px)`;
+            }
+
+            // Check if the fire has gone offscreen, reset it, and reset cooldown
+            if (fireX > viewportWidth) {
+                fireCooldown = false;
+                fireX = x + smur.width;
+                fire.style.display = 'none';
+            }
         }
+
+        // Handle keyboard input for WASD control
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+
+            if (key === 'w') {
+                y -= step;
+            } else if (key === 'a') {
+                x -= step;
+            } else if (key === 's') {
+                y += step;
+            } else if (key === 'd') {
+                x += step;
+            }
+
+            smur.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        // Handle the 'F' key to shoot fire
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+
+            if (!fireCooldown) {
+                if (key === 'f') {
+                    fireCooldown = true;
+                    fireX = x + smur.width;
+                    fire.style.transform = `translate(${fireX}px, ${y}px)`;
+                    fire.style.display = 'block';
+
+                    setTimeout(() => {
+                        fire.style.display = 'none';
+                        fireCooldown = false;
+                    }, cooldownDuration);
+                }
+            }
+        });
     </script>
 </body>
 </html>
