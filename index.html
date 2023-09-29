@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Control with Fire and Black</title>
+    <title>Smurf Cat: The Game</title>
     <style>
         body {
             margin: 0;
@@ -11,6 +11,8 @@
         }
         #smur {
             position: absolute;
+            width: 120px;
+            height: 120px; /* Set the desired size */
         }
         #fire {
             position: absolute;
@@ -27,7 +29,7 @@
 </head>
 <body>
     <img id="smur" src="smur.png" alt="Smur Image">
-    <img id="fire" src="fire.png" alt="Fire Image">
+    <img id="fire" src="maxresdefault.jpg" alt="Fire Image">
     <div id="black"></div>
     <script>
         const smur = document.getElementById('smur');
@@ -40,46 +42,28 @@
         const step = 10;
         const cooldownDuration = 1000; // 1 second
 
-        document.addEventListener('keydown', (event) => {
-            const key = event.key.toLowerCase();
+        // Initialize gamepad support
+        window.addEventListener("gamepadconnected", (event) => {
+            const gamepad = event.gamepad;
+            // Start listening for gamepad input
+            handleGamepadInput(gamepad);
+        });
 
-            if (!fireCooldown) {
-                if (key === 'f') {
-                    fireCooldown = true;
-                    fire.style.transform = `translate(${x}px, ${y}px)`;
-                    fire.style.display = 'block';
+        function handleGamepadInput(gamepad) {
+            // Check for joystick input and update character position
+            const axes = gamepad.axes;
+            const xAxis = axes[0];
+            const yAxis = axes[1];
 
-                    setTimeout(() => {
-                        fire.style.display = 'none';
-                        fireCooldown = false;
-                    }, cooldownDuration);
-                }
-            }
-
-            let newX = x;
-            let newY = y;
-
-            switch (key) {
-                case 'w':
-                    newY -= step;
-                    break;
-                case 'a':
-                    newX -= step;
-                    break;
-                case 's':
-                    newY += step;
-                    break;
-                case 'd':
-                    newX += step;
-                    break;
-            }
+            x += xAxis * step;
+            y += yAxis * step;
 
             // Check if the new position is inside the black image bounds.
             if (
-                newX >= 0 &&
-                newX <= 1080 &&
-                newY === 470 &&
-                !(newX <= 1080 && newX + smur.width >= 0)
+                x >= 0 &&
+                x <= 1080 &&
+                y === 470 &&
+                !(x <= 1080 && x + smur.width >= 0)
             ) {
                 // If the character is at the specified y-coordinate range,
                 // show the black image spanning across the screen.
@@ -88,11 +72,12 @@
             } else {
                 black.style.display = 'none';
                 // Update the character's position only if it's not inside the black image bounds.
-                x = newX;
-                y = newY;
                 smur.style.transform = `translate(${x}px, ${y}px)`;
             }
-        });
+
+            // Request the next animation frame to keep the gamepad input loop running
+            requestAnimationFrame(() => handleGamepadInput(gamepad));
+        }
     </script>
 </body>
 </html>
