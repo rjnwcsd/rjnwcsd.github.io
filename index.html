@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Control with Fire and Black</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #smur {
+            position: absolute;
+        }
+        #fire {
+            position: absolute;
+            display: none;
+        }
+        #black {
+            position: absolute;
+            display: none;
+            width: 1080px;
+            height: 10px;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+    <img id="smur" src="smur.png" alt="Smur Image">
+    <img id="fire" src="fire.png" alt="Fire Image">
+    <div id="black"></div>
+    <script>
+        const smur = document.getElementById('smur');
+        const fire = document.getElementById('fire');
+        const black = document.getElementById('black');
+        let x = 0;
+        let y = 0;
+        let fireCooldown = false;
+
+        const step = 10;
+        const cooldownDuration = 1000; // 1 second
+
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+
+            if (!fireCooldown) {
+                if (key === 'f') {
+                    fireCooldown = true;
+                    fire.style.transform = `translate(${x}px, ${y}px)`;
+                    fire.style.display = 'block';
+
+                    setTimeout(() => {
+                        fire.style.display = 'none';
+                        fireCooldown = false;
+                    }, cooldownDuration);
+                }
+            }
+
+            let newX = x;
+            let newY = y;
+
+            switch (key) {
+                case 'w':
+                    newY -= step;
+                    break;
+                case 'a':
+                    newX -= step;
+                    break;
+                case 's':
+                    newY += step;
+                    break;
+                case 'd':
+                    newX += step;
+                    break;
+            }
+
+            // Check if the new position is inside the black image bounds.
+            if (
+                newX >= 0 &&
+                newX <= 1080 &&
+                newY === 470 &&
+                !(newX <= 1080 && newX + smur.width >= 0)
+            ) {
+                // If the character is at the specified y-coordinate range,
+                // show the black image spanning across the screen.
+                black.style.transform = `translate(0px, 470px)`;
+                black.style.display = 'block';
+            } else {
+                black.style.display = 'none';
+                // Update the character's position only if it's not inside the black image bounds.
+                x = newX;
+                y = newY;
+                smur.style.transform = `translate(${x}px, ${y}px)`;
+            }
+        });
+    </script>
+</body>
+</html>
