@@ -1,1 +1,1 @@
-# rjnwcsd.github.io
+Extremely basic webgame, will continue to update
