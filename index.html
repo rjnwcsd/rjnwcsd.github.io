@@ -3,17 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>smurf</title>
+    <title>Blue Cat</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             position: relative;
         }
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+        }
         #smur {
             position: absolute;
             width: 120px;
             height: 120px;
+            display: none;
         }
         .enemy {
             position: absolute;
@@ -33,12 +47,23 @@
             height: 10px;
             background-color: black;
         }
+        #pauseOverlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            font-size: 36px;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <img id="smur" src="assets/images/maxresdefault.jpg" alt="Smur Image">
-    <img id="fire" src="assets/images/Mario_Fireball.png" alt="Fire Image">
+    <div id="loadingScreen">Made by RJNWCSD</div>
+    <img id="smur" src="maxresdefault.jpg" alt="Maxresdefault Image">
+    <img id="fire" src="Mario_Fireball.png" alt="Mario Fireball Image">
     <div id="black"></div>
+    <div id="pauseOverlay">Paused</div>
     <script>
         const smur = document.getElementById('smur');
         const fire = document.getElementById('fire');
@@ -54,6 +79,7 @@
         let keys = {};
         let screenWidth = window.innerWidth;
         let fireCooldown = false;
+        let isPaused = false;
         const cooldownDuration = 1000;
 
         const step = 10;
@@ -61,7 +87,21 @@
         const enemySpeed = 2;
         const spawnInterval = 10000;
 
-        // Initialize gamepad support
+        // Function to hide the loading screen and show the game elements
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.style.display = 'none';
+
+            // Show game elements
+            smur.style.display = 'block';
+            fire.style.display = 'block';
+        }
+
+        // Wait for assets to load before hiding the loading screen
+        window.addEventListener('load', () => {
+            hideLoadingScreen();
+        });
+  // Initialize gamepad support
         window.addEventListener("gamepadconnected", (event) => {
             const gamepad = event.gamepad;
             // Start listening for gamepad input
@@ -74,8 +114,10 @@
             const xAxis = axes[0];
             const yAxis = axes[1];
 
-            x += xAxis * step;
-            y += yAxis * step;
+            if (!isPaused) {
+                x += xAxis * step;
+                y += yAxis * step;
+            }
 
             // Update the character's position
             smur.style.transform = `translate(${x}px, ${y}px)`;
@@ -94,7 +136,9 @@
             requestAnimationFrame(() => handleGamepadInput(gamepad));
 
             // Move the fireball
-            fireX += fireStep;
+            if (!isPaused) {
+                fireX += fireStep;
+            }
             fire.style.transform = `translate(${fireX}px, ${y}px)`;
 
             // Check if the fireball has gone offscreen, reset it
@@ -107,28 +151,36 @@
             moveEnemies();
         }
 
-        // Handle keyboard input for WASD control
+        // Handle keyboard input for WASD control and pause
         document.addEventListener('keydown', (event) => {
             const key = event.key.toLowerCase();
 
-            // Store the pressed key in the keys object
-            keys[key] = true;
+            // Handle pause
+            if (key === 'p') {
+                togglePause();
+            }
 
-            // Update the character's position based on the pressed keys
-            updateCharacterPosition();
+            // Continue processing input only if the game is not paused
+            if (!isPaused) {
+                // Store the pressed key in the keys object
+                keys[key] = true;
 
-            // Handle the 'F' key to shoot fire
-            if (!fireCooldown) {
-                if (key === 'f') {
-                    fireCooldown = true;
-                    fireX = x + smur.width;
-                    fire.style.transform = `translate(${fireX}px, ${y}px)`;
-                    fire.style.display = 'block'; // Display the fireball when firing
+                // Update the character's position based on the pressed keys
+                updateCharacterPosition();
 
-                    setTimeout(() => {
-                        fire.style.display = 'none'; // Hide the fireball after the cooldown
-                        fireCooldown = false;
-                    }, cooldownDuration);
+                // Handle the 'F' key to shoot fire
+                if (!fireCooldown) {
+                    if (key === 'f') {
+                        fireCooldown = true;
+                        fireX = x + smur.width;
+                        fire.style.transform = `translate(${fireX}px, ${y}px)`;
+                        fire.style.display = 'block'; // Display the fireball when firing
+
+                        setTimeout(() => {
+                            fire.style.display = 'none'; // Hide the fireball after the cooldown
+                            fireCooldown = false;
+                        }, cooldownDuration);
+                    }
                 }
             }
         });
@@ -144,30 +196,32 @@
         });
 
         function updateCharacterPosition() {
-            let xChange = 0;
-            let yChange = 0;
+            if (!isPaused) {
+                let xChange = 0;
+                let yChange = 0;
 
-            // Check which keys are pressed and calculate the position change accordingly
-            if (keys['w']) {
-                yChange -= step;
-            }
-            if (keys['a']) {
-                xChange -= step;
-            }
-            if (keys['s']) {
-                yChange += step;
-            }
-            if (keys['d']) {
-                xChange += step;
-            }
+                // Check which keys are pressed and calculate the position change accordingly
+                if (keys['w']) {
+                    yChange -= step;
+                }
+                if (keys['a']) {
+                    xChange -= step;
+                }
+                if (keys['s']) {
+                    yChange += step;
+                }
+                if (keys['d']) {
+                    xChange += step;
+                }
 
-            // Update the character's position
-            x += xChange;
-            y += yChange;
-            smur.style.transform = `translate(${x}px, ${y}px)`;
+                // Update the character's position
+                x += xChange;
+                y += yChange;
+                smur.style.transform = `translate(${x}px, ${y}px)`;
 
-            // Move the enemies towards smur
-            moveEnemies();
+                // Move the enemies towards smur
+                moveEnemies();
+            }
         }
 
         function moveEnemies() {
@@ -181,6 +235,16 @@
                 const newEnemyX = enemyX + deltaX;
                 const newEnemyY = enemyY + deltaY;
                 enemy.style.transform = `translate(${newEnemyX}px, ${newEnemyY}px)`;
+            }
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseOverlay = document.getElementById('pauseOverlay');
+            if (isPaused) {
+                pauseOverlay.style.display = 'block';
+            } else {
+                pauseOverlay.style.display = 'none';
             }
         }
 
